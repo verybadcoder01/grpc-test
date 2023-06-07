@@ -1,0 +1,37 @@
+syntax = "proto3";
+package carPosition;
+option go_package = "/api";
+
+
+service CarPosition {
+  rpc Store(Car) returns (Status) {}
+  rpc Retrieve(Id) returns (Coords) {}
+  rpc Neighbors(Circle) returns (Cars) {}
+}
+
+message Id {
+  int64 car_id = 1;
+}
+
+message Coords {
+  int64 xcoord = 1;
+  int64 ycoord = 2;
+}
+
+message Car {
+  Id id = 1;
+  Coords point = 2;
+}
+
+message Circle {
+  Coords point = 1;
+  float area = 2;
+}
+
+message Cars {
+  repeated Car cars = 1;
+}
+
+message Status {
+  string status = 1;
+}
