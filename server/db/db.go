@@ -4,9 +4,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
+)
+
+// драйверы
+import (
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/sijms/go-ora"
 )
 
 type Storable interface {
@@ -20,27 +27,57 @@ type StorableList interface {
 	AppendEmpty()
 }
 
+type DatabaseConfig struct {
+	Driver   string
+	DSN      string // для облачных бд
+	FilePath string // для файловых бд
+}
+
 type Database struct {
 	pool *sql.DB
 }
 
-func NewDatabase(path string) (*Database, error) {
+func IsSupported(driver string) bool {
+	return driver == "sqlite" || driver == "postgres" || driver == "mysql" || driver == "oracle"
+}
+
+func NewDatabase(conf DatabaseConfig) (*Database, error) {
 	var Pool *sql.DB
-	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		_, err = os.Create(path)
-		if err != nil {
-			log.Fatalf(err.Error())
+	if !IsSupported(conf.Driver) {
+		log.Fatalf("this type of database is not supported " + conf.Driver)
+	}
+	if conf.Driver == "sqlite" {
+		if conf.FilePath == "" {
+			panic("empty filepath for file-based db!")
 		}
-		Pool, err = sql.Open("sqlite3", path)
-		if err != nil {
-			log.Fatalf(err.Error())
+		if _, err := os.Stat(conf.FilePath); errors.Is(err, os.ErrNotExist) {
+			_, err = os.Create(conf.FilePath)
+			if err != nil {
+				log.Fatalf(err.Error())
+			}
+			Pool, err = sql.Open("sqlite3", conf.FilePath)
+			if err != nil {
+				log.Fatalf(err.Error())
+			}
+			log.Println("Database created!")
+		} else {
+			Pool, err = sql.Open("sqlite3", conf.FilePath)
+			if err != nil {
+				log.Fatalf(err.Error())
+			}
 		}
-		log.Println("Database created!")
 	} else {
-		Pool, err = sql.Open("sqlite3", path)
+		pool, err := sql.Open(conf.Driver, conf.DSN)
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
+		err = pool.Ping()
+		if err != nil {
+			log.Fatalf(err.Error())
+		} else {
+			log.Printf("Connected successfully to %s", conf.DSN)
+		}
+		Pool = pool
 	}
 	InitTable(Pool)
 	return &Database{pool: Pool}, nil
@@ -48,7 +85,10 @@ func NewDatabase(path string) (*Database, error) {
 
 func InitTable(db *sql.DB) {
 	stmt := `CREATE TABLE Positions(Id INTEGER PRIMARY KEY, XCoord INTEGER, YCoord INTEGER)`
-	_, _ = db.Exec(stmt)
+	_, err := db.Exec(stmt)
+	if err != nil {
+		log.Println(err.Error())
+	}
 }
 
 func (db *Database) GetAll(dest StorableList) error {

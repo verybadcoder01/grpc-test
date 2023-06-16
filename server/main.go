@@ -30,7 +30,7 @@ func main() {
 	}
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	database, err := db.NewDatabase(conf.DbPath)
+	database, err := db.NewDatabase(db.DatabaseConfig{Driver: conf.DbDriver, FilePath: conf.DbPath, DSN: conf.DSN})
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

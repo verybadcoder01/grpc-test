@@ -7,8 +7,10 @@ import (
 )
 
 type Config struct {
-	DbPath  string `yaml:"db_path"`
-	LogPath string `yaml:"log_path"`
+	DbDriver string `yaml:"db_driver"`
+	DSN      string `yaml:"dsn"`
+	DbPath   string `yaml:"db_path"`
+	LogPath  string `yaml:"log_path"`
 }
 
 func ParseConfig() Config {

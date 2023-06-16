@@ -2,6 +2,8 @@ package car
 
 import (
 	"database/sql"
+	"fmt"
+	"log"
 	"math"
 	"megafon-test/server/db"
 )
@@ -29,8 +31,10 @@ func (c *CarList) AppendEmpty() {
 }
 
 func (car *Car) StoreSelf(db *sql.DB) error {
-	stmt := `INSERT INTO Positions (Id, XCoord, YCoord) VALUES (?, ?, ?) ON CONFLICT(Id) DO UPDATE SET Id = ?, XCoord = ?, YCoord = ?`
-	_, err := db.Exec(stmt, car.Id, car.Xcoord, car.Ycoord, car.Id, car.Xcoord, car.Ycoord)
+	// place bindings здесь почему-то не работают. Выдает ошибку синтаксиса. Поэтому вот так.
+	stmt := fmt.Sprintf("INSERT INTO positions (Id, XCoord, YCoord) VALUES (%v, %v, %v) ON CONFLICT(Id) DO UPDATE SET Id = %v, XCoord = %v, YCoord = %v", car.Id, car.Xcoord, car.Ycoord, car.Id, car.Xcoord, car.Ycoord)
+	log.Println(stmt)
+	_, err := db.Exec(stmt)
 	if err != nil {
 		return err
 	}
