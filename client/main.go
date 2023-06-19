@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/grpclog"
 	"log"
 	pb "megafon-test/api"
@@ -17,23 +18,29 @@ var (
 	port = flag.String("port", "5757", "server port")
 )
 
+func ReadAnything(reader *bufio.Reader, delim byte) string {
+	data, err := reader.ReadString(delim)
+	if err != nil {
+		log.Println(err)
+	}
+	return data[:len(data)-1]
+}
+
 func ReadInt(reader *bufio.Reader) int64 {
-	data, _ := reader.ReadString('\n')
-	data = data[:len(data)-1]
+	data := ReadAnything(reader, '\n')
 	res, _ := strconv.Atoi(data)
 	return int64(res)
 }
 
 func ReadFloat(reader *bufio.Reader) float32 {
-	data, _ := reader.ReadString('\n')
-	data = data[:len(data)-1]
+	data := ReadAnything(reader, '\n')
 	res, _ := strconv.ParseFloat(data, 32)
 	return float32(res)
 }
 
 func main() {
 	opts := []grpc.DialOption{
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
 	conn, err := grpc.Dial("127.0.0.1"+":"+(*port), opts...)
 	if err != nil {
@@ -46,8 +53,7 @@ func main() {
 	var action string
 	reader := bufio.NewReader(os.Stdin)
 	for true {
-		action, err = reader.ReadString('\n')
-		action = action[:len(action)-1]
+		action = ReadAnything(reader, '\n')
 		if action == "stop" {
 			break
 		}

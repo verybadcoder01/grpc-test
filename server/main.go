@@ -3,14 +3,13 @@ package main
 import (
 	"flag"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/grpclog"
 	"log"
 	pb "megafon-test/api"
+	"megafon-test/logger"
 	"megafon-test/server/config"
 	"megafon-test/server/db"
 	"megafon-test/server/internal"
 	"net"
-	"os"
 )
 
 var (
@@ -19,18 +18,14 @@ var (
 
 func main() {
 	conf := config.ParseConfig()
-	f, err := os.OpenFile(conf.LogPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
-	if err != nil {
-		panic(err)
-	}
-	log.SetOutput(f)
+	logger.SetupLogging(conf.LogPath, 32, 28, 1)
 	listener, err := net.Listen("tcp", ":"+(*port))
 	if err != nil {
-		grpclog.Fatalf("failed to listen: %v", err)
+		log.Fatalf("failed to listen: %v", err)
 	}
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	database, err := db.NewDatabase(db.DatabaseConfig{Driver: conf.DbDriver, FilePath: conf.DbPath, DSN: conf.DSN})
+	database, err := db.NewDatabase(&db.DatabaseConfig{Driver: conf.DbDriver, FilePath: conf.DbPath, DSN: conf.DSN})
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

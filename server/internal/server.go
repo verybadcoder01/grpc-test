@@ -42,7 +42,7 @@ func (s *Server) Neighbors(c context.Context, request *pb.Circle) (*pb.Cars, err
 		return nil, err
 	}
 	var res []*pb.Car
-	base := car.Car{Xcoord: request.Point.Xcoord, Ycoord: request.Point.Ycoord}
+	base := car.Car{Xcoord: request.Point.GetXcoord(), Ycoord: request.Point.GetYcoord()}
 	for _, value := range cars.Cars {
 		cur := car.Car{Id: value.Id, Xcoord: value.Xcoord, Ycoord: value.Ycoord}
 		if float32(base.GetDist(cur)) <= request.Area {

@@ -41,7 +41,7 @@ func IsSupported(driver string) bool {
 	return driver == "sqlite" || driver == "postgres" || driver == "mysql" || driver == "oracle"
 }
 
-func NewDatabase(conf DatabaseConfig) (*Database, error) {
+func NewDatabase(conf *DatabaseConfig) (*Database, error) {
 	var Pool *sql.DB
 	if !IsSupported(conf.Driver) {
 		log.Fatalf("this type of database is not supported " + conf.Driver)
